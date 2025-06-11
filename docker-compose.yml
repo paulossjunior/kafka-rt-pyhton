@@ -1,0 +1,108 @@
+services:
+  db:
+    image: postgres:13
+    container_name: rt_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: rt4
+      POSTGRES_USER: rt_user
+      POSTGRES_PASSWORD: rt_pass
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+    - "5432:5432"  # Po
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rt_user -d rt4"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  rt:
+    image: netsandbox/request-tracker:6.0
+    container_name: request_tracker
+    restart: always
+    ports:
+      - "80:80"
+    environment:
+      RT_DB_TYPE: Pg
+      RT_DB_HOST: db
+      RT_DB_DATABASE: rt4
+      RT_DB_USER: rt_user
+      RT_DB_PASSWORD: rt_pass
+      RT_WEB_PORT: 80
+      RT_SERVER_NAME: localhost
+      RT_ORGANIZATION: "Sua Empresa"
+      RT_TIMEZONE: "America/Sao_Paulo"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./init-users.pl:/docker-entrypoint-initdb.d/init-users.pl
+      - rt-data:/opt/rt4/var
+
+  # Serviço para inicializar usuários (executa uma vez)
+  rt-init:
+    image: netsandbox/request-tracker:6.0
+    container_name: rt_init_users
+    depends_on:
+      - rt
+    volumes:
+      - ./create-users.sh:/create-users.sh
+    command: /bin/bash /create-users.sh
+    restart: "no"
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    hostname: zookeeper
+    container_name: zookeeper_rt
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+      - zookeeper-logs:/var/lib/zookeeper/log
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    hostname: kafka
+    container_name: kafka_rt
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "9101:9101"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_JMX_PORT: 9101
+      KAFKA_JMX_HOSTNAME: localhost
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui_rt
+    depends_on:
+      - kafka
+    ports:
+      - "8080:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+
+volumes:
+  pgdata:
+  rt-data:
+  zookeeper-data:
+  zookeeper-logs:
+  kafka-data:
