@@ -50,6 +50,7 @@ services:
       - ./create-users.sh:/create-users.sh
     command: /bin/bash /create-users.sh
     restart: "no"
+    
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     hostname: zookeeper

@@ -54,6 +54,20 @@ def verificar_ou_criar_fila(nome: str, descricao: str = "", correspond_address: 
         print("Resposta:", response_get.text)
         return None
 
+def fechar_ticket(ticket_id: int):
+    url = f"{RT_BASE_URL}/ticket/{ticket_id}"
+    payload = {
+        "Status": "resolved"  # ou "closed", "rejected" conforme o workflow configurado no RT
+    }
+
+    response = session.patch(url, json=payload)
+
+    if response.status_code == 200:
+        print(f"✅ Ticket #{ticket_id} foi fechado com sucesso.")
+    else:
+        print(f"❌ Erro ao fechar o ticket #{ticket_id}")
+        print("Status:", response.status_code)
+        print("Resposta:", response.text)
 
 
 def criar_ticket(subject: str, content: str, queue: str = "General") -> int:
@@ -69,6 +83,7 @@ def criar_ticket(subject: str, content: str, queue: str = "General") -> int:
 
     if response.status_code == 201:
         ticket_id = response.json().get("id")
+        print (response.json())
         print("✅ Ticket criado com sucesso!")
         print("Ticket ID:", ticket_id)
         return ticket_id

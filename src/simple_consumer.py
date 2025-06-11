@@ -1,6 +1,19 @@
-from kafka import KafkaConsumer
+from kafka import KafkaConsumer, KafkaProducer
 import json
 from rt import criar_ticket, comentar_ticket,verificar_ou_criar_fila
+
+
+def simple_producer(message):
+    producer = KafkaProducer(
+        bootstrap_servers=['localhost:9092'],
+        value_serializer=lambda v: json.dumps(v).encode('utf-8')
+    )
+    
+        
+    producer.send('zap', message)
+    print(f'Enviada mensagem {message}')
+    
+    producer.close()
 
 
 
@@ -43,7 +56,7 @@ def simple_consumer():
                     ticket_id=ticket_id,
                     mensagem="Mensagem adicional: o problema está sendo investigado pela equipe de infraestrutura."
             )
-
+            simple_producer(f"Tiket aberto numero: {ticket_id}")
             # Aqui você processa sua mensagem
             # Exemplo: salvar no banco, enviar email, etc.
             
