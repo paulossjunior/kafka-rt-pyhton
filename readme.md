@@ -85,8 +85,28 @@ ticket_id = criar_ticket(
     content=f"{message} - {timestamp}",
     queue="General"
 )
+
+verificar_ou_criar_fila(
+        nome="edital",
+        descricao="Fila de suporte edital",
+        correspond_address="suporte@example.com",
+        comment_address="comentarios-suporte@example.com"
+)
+
+
+
+
 ```
 
+
+
+
+## 📬 Variáveis de Ambiente
+
+```
+GEMINI_API_KEY= <KEY>
+MODEL=<Model>
+```
 ---
 
 ## 📂 Requisitos
