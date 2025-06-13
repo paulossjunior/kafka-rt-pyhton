@@ -18,7 +18,7 @@ services:
       retries: 5
 
   rt:
-    image: netsandbox/request-tracker:6.0
+    image: netsandbox/request-tracker
     container_name: request_tracker
     restart: always
     ports:
@@ -42,7 +42,7 @@ services:
 
   # Serviço para inicializar usuários (executa uma vez)
   rt-init:
-    image: netsandbox/request-tracker:6.0
+    image:  netsandbox/request-tracker
     container_name: rt_init_users
     depends_on:
       - rt

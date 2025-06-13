@@ -74,7 +74,7 @@ def criar_ticket(subject: str, content: str, queue: str = "General") -> int:
     url = f"{RT_BASE_URL}/ticket"
     payload = {
         "Subject": subject,
-        "Text": content,
+        "Content": content,
         "Queue": queue,
         "Requestor": "usuario@example.com"  # pode ser um email real
     }
